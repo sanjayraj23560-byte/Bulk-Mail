@@ -49,8 +49,8 @@ app.delete("/history", async (req, res) => {
 const transpoter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "sanjayraj23560@gmail.com",
-    pass: "cjil ghnd qdfv avkz"
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 })
 
