@@ -2,49 +2,25 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const port = 3000;
-const nodemailer = require('nodemailer')
-const mongoose = require('mongoose')
+
+const nodemailer = require('nodemailer');
+const mongoose = require('mongoose');
+
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect("mongodb://127.0.0.1:27017/email")
+mongoose.connect(process.env.MONGO_URL)
   .then(() => console.log("Connected to DB"))
-  .catch(() => console.log("Failed to connect"))
+  .catch((err) => console.log(err));
 
-// Replace your schema and model with this (adds timestamps)
 const EmailSchema = new mongoose.Schema({
   email: String,
-}, { timestamps: true })
+}, { timestamps: true });
 
-const Email = mongoose.model("mngEmails", EmailSchema)
-
-Email.find().then((data) => {
-  console.log(data[0])
-}).catch((err) => {
-  console.log(err)
-})
-
-// DELETE single record
-app.delete("/history/:id", async (req, res) => {
-  try {
-    await Email.findByIdAndDelete(req.params.id)
-    res.send(true)
-  } catch (err) {
-    console.log(err)
-    res.send(false)
-  }
-})
-
-// DELETE all records
-app.delete("/history", async (req, res) => {
-  try {
-    await Email.deleteMany({})
-    res.send(true)
-  } catch (err) {
-    console.log(err)
-    res.send(false)
-  }
-})
+const Email = mongoose.model(
+  "mngEmails",
+  EmailSchema
+);
 
 const transpoter = nodemailer.createTransport({
   service: "gmail",
@@ -52,54 +28,88 @@ const transpoter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
   }
-})
-
+});
 
 app.post("/sending", async (req, res) => {
 
   try {
 
-    const { email, text, subject } = req.body
+    const { email, text, subject } = req.body;
 
-    // save emails in db
-    const newMail = new EmailModel({
+    const newMail = new Email({
       email: email.join(", ")
-    })
+    });
 
-    await newMail.save()
+    await newMail.save();
 
-    // send mails
     const sendPromises = email.map((mail) => {
+
       return transpoter.sendMail({
-        from: "sanjayraj23560@gmail.com",
+        from: process.env.EMAIL_USER,
         to: mail,
         subject,
         text,
-      })
-    })
+      });
+    });
 
-    await Promise.all(sendPromises)
+    await Promise.all(sendPromises);
 
-    res.send(true)
+    res.send(true);
 
   } catch (err) {
 
-    console.log(err)
+    console.log(err);
 
-    res.send(false)
+    res.send(false);
   }
-})
+});
 
-app.get("/history", (req, res) => {
-  Email.find().then((data) => {
-    res.send(data)
-  }).catch((err) => {
-    res.send(err)
-  })
-})
+app.get("/history", async (req, res) => {
 
+  try {
 
+    const data = await Email.find();
+
+    res.send(data);
+
+  } catch (err) {
+
+    res.send(err);
+  }
+});
+
+app.delete("/history/:id", async (req, res) => {
+
+  try {
+
+    await Email.findByIdAndDelete(req.params.id);
+
+    res.send(true);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send(false);
+  }
+});
+
+app.delete("/history", async (req, res) => {
+
+  try {
+
+    await Email.deleteMany({});
+
+    res.send(true);
+
+  } catch (err) {
+
+    console.log(err);
+
+    res.send(false);
+  }
+});
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
-})
+});
