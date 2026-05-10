@@ -18,6 +18,12 @@ const EmailSchema = new mongoose.Schema({
 
 const Email = mongoose.model("mngEmails", EmailSchema)
 
+Email.find().then((data) => {
+  console.log(data[0])
+}).catch((err) => {
+  console.log(err)
+})
+
 // DELETE single record
 app.delete("/history/:id", async (req, res) => {
   try {
@@ -47,7 +53,7 @@ const transpoter = nodemailer.createTransport({
     pass: "cjil ghnd qdfv avkz"
   }
 })
-const EmailModel = mongoose.model("mngEmails", EmailSchema);
+
 
 app.post("/sending", async (req, res) => {
 

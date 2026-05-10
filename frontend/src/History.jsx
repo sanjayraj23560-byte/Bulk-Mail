@@ -13,7 +13,7 @@ function History() {
   // =========================
 
   useEffect(() => {
-    axios.get("http://localhost:3000/history")
+    axios.get("https://bulk-mail-zklf.onrender.com/history")
       .then((res) => {
         setHistory(res.data)
         setLoading(false)

@@ -159,7 +159,7 @@ function App() {
 
     setStatus(true)
 
-    axios.post("http://localhost:3000/sending", {
+    axios.post("https://bulk-mail-zklf.onrender.com/sending", {
 
       text: inp,
       subject: subInp,
