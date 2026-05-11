@@ -56,19 +56,20 @@ const transporter = nodemailer.createTransport({
 ========================= */
 
 app.post("/sending", async (req, res) => {
+
   try {
+
     const { email, text, subject } = req.body;
 
-    // save to DB
     const newMail = new Email({
       email: email.join(", ")
     });
 
     await newMail.save();
 
-    // send emails
     const sendPromises = email.map((mail) => {
-      return transporter.sendMail({
+
+      return transpoter.sendMail({
         from: process.env.EMAIL_USER,
         to: mail,
         subject,
@@ -76,12 +77,24 @@ app.post("/sending", async (req, res) => {
       });
     });
 
-    await Promise.all(sendPromises);
-
+    // send response immediately
     res.send(true);
 
+    // continue sending in background
+    Promise.all(sendPromises)
+
+      .then(() => {
+        console.log("All mails sent");
+      })
+
+      .catch((err) => {
+        console.log(err);
+      });
+
   } catch (err) {
-    console.log("Send error:", err);
+
+    console.log(err);
+
     res.send(false);
   }
 });
