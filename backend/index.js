@@ -47,14 +47,9 @@ const Email = mongoose.model(
 /* =========================
    NODEMAILER
 ========================= */
-
 const transporter = nodemailer.createTransport({
 
-  host: "smtp.gmail.com",
-
-  port: 587,
-
-  secure: false,
+  service: "gmail",
 
   auth: {
 
@@ -62,10 +57,13 @@ const transporter = nodemailer.createTransport({
 
     pass: process.env.EMAIL_PASS
 
+  },
+
+  tls: {
+    rejectUnauthorized: false
   }
 
 });
-
 /* =========================
    SEND MAIL
 ========================= */
