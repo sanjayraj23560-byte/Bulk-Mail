@@ -1,8 +1,9 @@
 const express = require('express');
 const cors = require('cors');
-const app = express();
 const mongoose = require('mongoose');
 const nodemailer = require('nodemailer');
+
+const app = express();
 
 const port = process.env.PORT || 3000;
 
@@ -20,13 +21,19 @@ mongoose.connect(process.env.MONGO_URL)
     console.log("MongoDB Connected 🚀");
 
     app.listen(port, () => {
+
       console.log(`Server is running on port ${port}`);
+
     });
 
   })
 
   .catch((err) => {
-    console.log("MongoDB connection error ❌", err);
+
+    console.log("MongoDB Connection Error ❌");
+
+    console.log(err);
+
   });
 
 /* =========================
@@ -35,7 +42,7 @@ mongoose.connect(process.env.MONGO_URL)
 
 const EmailSchema = new mongoose.Schema({
 
-  email: String,
+  email: String
 
 }, { timestamps: true });
 
@@ -47,6 +54,7 @@ const Email = mongoose.model(
 /* =========================
    NODEMAILER
 ========================= */
+
 const transporter = nodemailer.createTransport({
 
   service: "gmail",
@@ -61,9 +69,36 @@ const transporter = nodemailer.createTransport({
 
   tls: {
     rejectUnauthorized: false
+  },
+
+  connectionTimeout: 20000,
+  greetingTimeout: 20000,
+  socketTimeout: 20000
+
+});
+
+/* =========================
+   VERIFY SMTP
+========================= */
+
+transporter.verify(function (error, success) {
+
+  if (error) {
+
+    console.log("SMTP Error ❌");
+
+    console.log(error);
+
+  }
+
+  else {
+
+    console.log("SMTP Server Ready ✅");
+
   }
 
 });
+
 /* =========================
    SEND MAIL
 ========================= */
@@ -74,14 +109,16 @@ app.post("/sending", async (req, res) => {
 
     const { email, text, subject } = req.body;
 
-    // validation
+    /* VALIDATION */
+
     if (!Array.isArray(email) || email.length === 0) {
 
       return res.send(false);
 
     }
 
-    // save emails to database
+    /* SAVE TO DATABASE */
+
     const newMail = new Email({
 
       email: email.join(", ")
@@ -90,43 +127,49 @@ app.post("/sending", async (req, res) => {
 
     await newMail.save();
 
-    // send response immediately
+    /* SEND RESPONSE FAST */
+
     res.send(true);
 
-    // send mails in background
-    const sendPromises = email.map((mail) => {
+    /* SEND EMAILS IN BACKGROUND */
 
-      return transporter.sendMail({
+    for (const mail of email) {
 
-        from: process.env.EMAIL_USER,
+      try {
 
-        to: mail,
+        const info = await transporter.sendMail({
 
-        subject,
+          from: process.env.EMAIL_USER,
 
-        text,
+          to: mail,
 
-      });
+          subject,
 
-    });
+          text
 
-    Promise.all(sendPromises)
+        });
 
-      .then(() => {
+        console.log(`Mail Sent To ✅ ${mail}`);
 
-        console.log("All mails sent ✅");
+        console.log(info.response);
 
-      })
+      }
 
-      .catch((err) => {
+      catch (err) {
 
-        console.log("Mail sending error ❌", err);
+        console.log(`Failed Sending ❌ ${mail}`);
 
-      });
+        console.log(err);
+
+      }
+
+    }
 
   }
 
   catch (err) {
+
+    console.log("Route Error ❌");
 
     console.log(err);
 
