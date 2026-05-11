@@ -13,7 +13,7 @@ function History() {
   // =========================
 
   useEffect(() => {
-    axios.get("https://bulk-mail-zklf.onrender.com/history")
+    axios.delete("https://bulk-mail-zklf.onrender.com/history")
       .then((res) => {
         setHistory(res.data)
         setLoading(false)
@@ -29,7 +29,7 @@ function History() {
   // =========================
 
   const DeleteEntry = (id) => {
-    axios.delete(`http://localhost:3000/history/${id}`)
+    axios.delete(`https://bulk-mail-zklf.onrender.com/history/${id}`)
       .then(() => {
         setHistory((prev) => prev.filter((item) => item._id !== id))
       })
