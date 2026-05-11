@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
 const app = express();
 
@@ -9,6 +9,14 @@ const port = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+
+/* =========================
+   RESEND CONFIG
+========================= */
+
+const resend = new Resend(
+  process.env.RESEND_API_KEY
+);
 
 /* =========================
    MONGODB CONNECTION
@@ -22,7 +30,7 @@ mongoose.connect(process.env.MONGO_URL)
 
     app.listen(port, () => {
 
-      console.log(`Server is running on port ${port}`);
+      console.log(`Server running on port ${port}`);
 
     });
 
@@ -52,54 +60,6 @@ const Email = mongoose.model(
 );
 
 /* =========================
-   NODEMAILER
-========================= */
-
-const transporter = nodemailer.createTransport({
-
-  service: "gmail",
-
-  auth: {
-
-    user: process.env.EMAIL_USER,
-
-    pass: process.env.EMAIL_PASS
-
-  },
-
-  tls: {
-    rejectUnauthorized: false
-  },
-
-  connectionTimeout: 20000,
-  greetingTimeout: 20000,
-  socketTimeout: 20000
-
-});
-
-/* =========================
-   VERIFY SMTP
-========================= */
-
-transporter.verify(function (error, success) {
-
-  if (error) {
-
-    console.log("SMTP Error ❌");
-
-    console.log(error);
-
-  }
-
-  else {
-
-    console.log("SMTP Server Ready ✅");
-
-  }
-
-});
-
-/* =========================
    SEND MAIL
 ========================= */
 
@@ -117,7 +77,7 @@ app.post("/sending", async (req, res) => {
 
     }
 
-    /* SAVE TO DATABASE */
+    /* SAVE EMAILS TO DATABASE */
 
     const newMail = new Email({
 
@@ -127,37 +87,37 @@ app.post("/sending", async (req, res) => {
 
     await newMail.save();
 
-    /* SEND RESPONSE FAST */
+    /* FAST RESPONSE */
 
     res.send(true);
 
-    /* SEND EMAILS IN BACKGROUND */
+    /* SEND MAILS IN BACKGROUND */
 
     for (const mail of email) {
 
       try {
 
-        const info = await transporter.sendMail({
+        const data = await resend.emails.send({
 
-          from: process.env.EMAIL_USER,
+          from: "onboarding@resend.dev",
 
           to: mail,
 
-          subject,
+          subject: subject,
 
-          text
+          text: text
 
         });
 
-        console.log(`Mail Sent To ✅ ${mail}`);
+        console.log(`Mail Sent ✅ ${mail}`);
 
-        console.log(info.response);
+        console.log(data);
 
       }
 
       catch (err) {
 
-        console.log(`Failed Sending ❌ ${mail}`);
+        console.log(`Mail Failed ❌ ${mail}`);
 
         console.log(err);
 
